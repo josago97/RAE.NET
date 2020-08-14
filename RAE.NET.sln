@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29519.87
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RAE", "RAE\RAE.csproj", "{F214F029-5904-44EB-8C99-B84821558369}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RAE.Demo", "RAE.Demo\RAE.Demo.csproj", "{66258F90-04F3-49B6-B8E0-98A82838D6B5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F214F029-5904-44EB-8C99-B84821558369}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F214F029-5904-44EB-8C99-B84821558369}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F214F029-5904-44EB-8C99-B84821558369}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F214F029-5904-44EB-8C99-B84821558369}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66258F90-04F3-49B6-B8E0-98A82838D6B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66258F90-04F3-49B6-B8E0-98A82838D6B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66258F90-04F3-49B6-B8E0-98A82838D6B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66258F90-04F3-49B6-B8E0-98A82838D6B5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {17DC128C-3CC5-430A-B64E-0150FEBB72AD}
+	EndGlobalSection
+EndGlobal
