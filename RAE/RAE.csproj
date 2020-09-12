@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>RAE.NET</PackageId>
+    <Product>RAE.NET</Product>
+    <Description>Diccionario Real Academia Española API</Description>
+    <Authors>Jose97</Authors>
+    <Company />
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/josago97/RAE.NET</RepositoryUrl>
+    <PackageTags>RAE, Diccionario, España, Español, Lengua, Dictionary, Spain, Spanish, Language</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
