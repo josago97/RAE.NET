@@ -1,30 +1,17 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Linq;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace RAE
 {
-    /*
-        Based on information obtained from:
-        Basado en la información obtenida de:
-        https://devhub.io/repos/mgp25-RAE-API
-    */
     public class DRAE
     {
-        private const string URLBASE = "https://dle.rae.es/data";
-        private const string TOKEN = "cDY4MkpnaFMzOmFHZlVkQ2lFNDM0";
-
-        private HttpClient _httpClient;
+        private RAEAPI _raeAPI;
+        private ListaPalabrasAPI _listaPalabrasAPI;
 
         public DRAE()
         {
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", TOKEN);
+            _raeAPI = new RAEAPI();
+            _listaPalabrasAPI = new ListaPalabrasAPI();
         }
 
         /// <summary>
@@ -35,17 +22,18 @@ namespace RAE
         /// <para>The id of the word to search.</para>
         /// <para>El id de la palabra a buscar.</para>
         /// </param>
-        public async Task<string[]> FetchWordByIdAsync(string wordId)
+        public Task<string[]> FetchWordByIdAsync(string wordId)
         {
-            var response = await _httpClient.GetStringAsync($"{URLBASE}/fetch?id={wordId}");
+            return _raeAPI.FetchWordByIdAsync(wordId);
+        }
 
-            MatchCollection matches = Regex.Matches(response, "<p class=\"(?:j|m)\".*?>.*?</p>");
-
-            string[] definitions = matches.Cast<Match>()
-                                          .Select(m => Regex.Replace(m.Value, "<.*?>", ""))
-                                          .ToArray();
-
-            return definitions;
+        /// <summary>
+        /// <para>Get all the words that exist.</para>
+        /// <para>Obtiene todas las palabras que existen.</para>
+        /// </summary>
+        public Task<string[]> GetAllWordsAsync()
+        {
+            return _listaPalabrasAPI.GetAllWordsAsync();
         }
 
         /// <summary>
@@ -56,49 +44,53 @@ namespace RAE
         /// <para>The base word.</para>
         /// <para>La palabra base.</para>
         /// </param>
-        public async Task<List<string>> GetKeysAsync(string query)
+        public Task<string[]> GetKeysAsync(string query)
         {
-            string response = await _httpClient.GetStringAsync($"{URLBASE}/keys?q={query}&callback=");
-            string json = Regex.Match(response, @"\[.*?\]").Value;
-
-            var keys = JsonConvert.DeserializeObject<List<string>>(json);
-
-            return keys;
+            return _raeAPI.GetKeysAsync(query);
         }
 
         /// <summary>
         /// <para>Get a random word.</para>
         /// <para>Obtiene una palabra aleatoria.</para>
         /// </summary>
-        public async Task<Word> GetRandomWordAsync()
+        public Task<Word> GetRandomWordAsync()
         {
-            string response = await _httpClient.GetStringAsync($"{URLBASE}/random");
-
-            string idFormat = "article id=\"";
-            Match idMatch = Regex.Match(response, $@"{idFormat}\w+");
-            string id = Regex.Replace(idMatch.Value, idFormat, "");
-
-            string contentFormat = "class=\"f\".*?>";
-            Match contentMatch = Regex.Match(response, $@"{contentFormat}\w[\,\s\w]*");
-            string content = Regex.Replace(contentMatch.Value, contentFormat, "");
-
-            return new Word(id, content);
+            return _raeAPI.GetRandomWordAsync();
         }
 
         /// <summary>
         /// <para>Get the word of the day.</para>
         /// <para>Obtiene la palabra del día.</para>
         /// </summary>
-        public async Task<Word> GetWordOfTheDayAsync()
+        public Task<Word> GetWordOfTheDayAsync()
         {
-            string response = await _httpClient.GetStringAsync($"{URLBASE}/wotd?callback=");
-            string json = response.Substring(1, response.Length - 2);
-            JObject jobject = JObject.Parse(json);
+            return _raeAPI.GetWordOfTheDayAsync();
+        }
 
-            string id = jobject.Value<string>("id");
-            string content = jobject.Value<string>("header");
+        /// <summary>
+        /// <para>Gets the words that start with a sequence of letters.</para>
+        /// <para>Obtiene las palabras que empiezan con una secuencia de letras.</para>
+        /// </summary>
+        /// <param name="query">
+        /// <para>Sequence of letters to search.</para>
+        /// <para>Secuencia de letras a buscar.</para>
+        /// </param>
+        public Task<string[]> GetWordsStartWithAsync(string query)
+        {
+            return _listaPalabrasAPI.GetWordsStartWithAsync(query);
+        }
 
-            return new Word(id, content);
+        /// <summary>
+        /// <para>Gets the words that contain a sequence of letters.</para>
+        /// <para>Obtiene las palabras que contienen una secuencia de letras.</para>
+        /// </summary>
+        /// <param name="query">
+        /// <para>Sequence of letters to search.</para>
+        /// <para>Secuencia de letras a buscar.</para>
+        /// </param>
+        public Task<string[]> GetWordsContainAsync(string query)
+        {
+            return _listaPalabrasAPI.GetWordsContainAsync(query);
         }
 
         /// <summary>
@@ -113,28 +105,9 @@ namespace RAE
         /// <para>If true it will take secondary entries.</para>
         /// <para>Si es verdadero cogerá entradas secundarias.</para>
         /// </param>
-        public async Task<List<Word>> SearchWordAsync(string word, bool allGroups = true)
-        {             
-            string response = await _httpClient.GetStringAsync($"{URLBASE}/search?w={word}");
-            JToken jtoken = JToken.Parse(response);
-
-            var words = new List<Word>();
-            foreach (var w in jtoken.SelectToken("res"))
-            {
-                int group = w.Value<int>("grp");
-
-                if (allGroups || group == 0)
-                {
-                    string id = w.Value<string>("id");
-                    string content = w.Value<string>("header");
-
-                    Match contentMatch = Regex.Match(content, @"[A-Za-z/-]+");
-
-                    words.Add(new Word(id, contentMatch.Success ? contentMatch.Value : content));
-                }
-            }
-
-            return words;
+        public Task<List<Word>> SearchWordAsync(string word, bool allGroups = true)
+        {
+            return _raeAPI.SearchWordAsync(word, allGroups);
         }
     }
 }

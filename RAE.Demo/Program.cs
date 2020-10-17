@@ -13,7 +13,11 @@ namespace RAE.Demo
             GetKeysAsync,
             SearchWordAsync,
             WordOfTheDayAsync,
-            FetchRandomWorldAsync
+            FetchRandomWorldAsync,
+            GetRandomWorldAsync,
+            GetWordsStartWithAsync,
+            GetWordsContainAsync,
+            GetAllWordsAsync
         };
 
         static async Task Main()
@@ -34,7 +38,7 @@ namespace RAE.Demo
 
         static async Task GetKeysAsync()
         {
-            var query = "hola";
+            var query = "w";
             var keys = await drae.GetKeysAsync(query);
 
             Console.WriteLine($"GetKeys ({query}): {string.Join(", ", keys)}");
@@ -69,6 +73,29 @@ namespace RAE.Demo
 
             Console.WriteLine($"Definitions of {word.Content}:");
             Array.ForEach(definitions, Console.WriteLine);
+        }
+
+        static async Task GetWordsStartWithAsync()
+        {
+            string character = "A";
+            string[] words = await drae.GetWordsStartWithAsync(character);
+
+            Console.WriteLine($"There are {words.Length} words in the dictionary that start with '{character}'");
+        }
+
+        static async Task GetWordsContainAsync()
+        {
+            string character = "A";
+            string[] words = await drae.GetWordsContainAsync(character);
+
+            Console.WriteLine($"There are {words.Length} words in the dictionary that contain '{character}'");
+        }
+
+        static async Task GetAllWordsAsync()
+        {
+            string[] allWords = await drae.GetAllWordsAsync();
+
+            Console.WriteLine($"There are {allWords.Length} words in the dictionary");
         }
     }
 }
