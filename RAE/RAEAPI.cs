@@ -1,19 +1,23 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace RAE
 {
-/*
-    Based on information obtained from:
-    Basado en la información obtenida de:
-    https://devhub.io/repos/mgp25-RAE-API
-*/
+    /*
+        Based on information obtained from:
+        Basado en la información obtenida de:
+        https://devhub.io/repos/mgp25-RAE-API
+        https://github.com/mgp25/RAE-API
+    */
     internal class RAEAPI
     {
         private const string URLBASE = "https://dle.rae.es/data";
@@ -23,8 +27,7 @@ namespace RAE
 
         public RAEAPI()
         {
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", TOKEN);
+            _httpClient = new ScraperHttpClient(TOKEN);
         }
 
         public async Task<string[]> FetchWordByIdAsync(string wordId)
@@ -34,7 +37,8 @@ namespace RAE
             MatchCollection matches = Regex.Matches(response, "<p class=\"(?:j|m)\".*?>.*?</p>");
 
             string[] definitions = matches.Cast<Match>()
-                                          .Select(m => Regex.Replace(m.Value, "<.*?>", ""))
+                                          .Select(match => Regex.Replace(match.Value, "<.*?>", ""))
+                                          .Select(HtmlDecode)
                                           .ToArray();
 
             return definitions;
@@ -45,7 +49,7 @@ namespace RAE
             string response = await _httpClient.GetStringAsync($"{URLBASE}/keys?q={query}&callback=");
             string json = Regex.Match(response, @"\[.*?\]").Value;
 
-            var keys = JsonConvert.DeserializeObject<string[]>(json);
+            string[] keys = JsonConvert.DeserializeObject<string[]>(json);
 
             return keys;
         }
@@ -62,43 +66,47 @@ namespace RAE
             Match contentMatch = Regex.Match(response, $@"{contentFormat}\w[\,\s\w]*");
             string content = Regex.Replace(contentMatch.Value, contentFormat, "");
 
-            return new Word(id, content);
+            return new Word(id, HtmlDecode(content));
         }
 
         public async Task<Word> GetWordOfTheDayAsync()
         {
             string response = await _httpClient.GetStringAsync($"{URLBASE}/wotd?callback=");
-            string json = response.Substring(1, response.Length - 2);
-            JObject jobject = JObject.Parse(json);
+            JObject jobject = JObject.Parse(response);
 
             string id = jobject.Value<string>("id");
             string content = jobject.Value<string>("header");
 
-            return new Word(id, content);
+            return new Word(id, HtmlDecode(content));
         }
 
         public async Task<List<Word>> SearchWordAsync(string word, bool allGroups = true)
         {
             string response = await _httpClient.GetStringAsync($"{URLBASE}/search?w={word}");
             JToken jtoken = JToken.Parse(response);
+            List<Word> words = new List<Word>();
 
-            var words = new List<Word>();
-            foreach (var w in jtoken.SelectToken("res"))
+            foreach (JToken jWord in jtoken.SelectToken("res"))
             {
-                int group = w.Value<int>("grp");
+                int group = jWord.Value<int>("grp");
 
                 if (allGroups || group == 0)
                 {
-                    string id = w.Value<string>("id");
-                    string content = w.Value<string>("header");
+                    string id = jWord.Value<string>("id");
+                    string content = jWord.Value<string>("header");
+                    Match contentMatch = Regex.Match(content, @"\b[\p{L}\p{M}/-]+");
+                    if (contentMatch.Success) content = contentMatch.Value;
 
-                    Match contentMatch = Regex.Match(content, @"[A-Za-z/-]+");
-
-                    words.Add(new Word(id, contentMatch.Success ? contentMatch.Value : content));
+                    words.Add(new Word(id, content));
                 }
             }
 
             return words;
+        }
+
+        private string HtmlDecode(string content)
+        {
+            return WebUtility.HtmlDecode(content);
         }
     }
 }

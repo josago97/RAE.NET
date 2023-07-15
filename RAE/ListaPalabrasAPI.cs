@@ -1,10 +1,9 @@
-﻿using HtmlAgilityPack;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using HtmlAgilityPack;
 
 namespace RAE
 {
@@ -17,16 +16,21 @@ namespace RAE
 
         public ListaPalabrasAPI()
         {
-            _httpClient = new HttpClient();
+            _httpClient = new ScraperHttpClient();
         }
 
         public async Task<string[]> GetAllWordsAsync()
         {
-            List<string> words = new List<string>();
+            List<string> result = new List<string>();
 
-            await Task.Run(() => Array.ForEach(ALPHABET, s => words.AddRange(GetWordsStartWithAsync(s).Result)));
+            IEnumerable<Task<string[]>> tasks = ALPHABET.Select(GetWordsStartWithAsync);
 
-            return words.ToArray();
+            foreach (string[] words in await Task.WhenAll(tasks))
+            {
+                result.AddRange(words);
+            }
+            
+            return result.ToArray();
         }
 
         public async Task<string[]> GetWordsStartWithAsync(string query)
@@ -78,7 +82,7 @@ namespace RAE
         {
             string[] words = document.GetElementbyId("columna_resultados_generales")
                                      .SelectNodes("descendant::*[@id='palabra_resultado']")
-                                     .Select(n => n.InnerText.Trim(' ', '\n'))
+                                     .Select(node => node.InnerText.Trim(' ', '\n'))
                                      .ToArray();
 
             return words;

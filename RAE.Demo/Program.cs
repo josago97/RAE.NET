@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,7 +25,7 @@ namespace RAE.Demo
         {
             drae = new DRAE();
 
-            for(int i = 0; i < functions.Length; i++)
+            for (int i = 0; i < functions.Length; i++)
             {
                 await functions[i]();
                 Console.WriteLine();
@@ -38,30 +39,30 @@ namespace RAE.Demo
 
         static async Task GetKeysAsync()
         {
-            var query = "w";
-            var keys = await drae.GetKeysAsync(query);
+            string query = "w";
+            string[] keys = await drae.GetKeysAsync(query);
 
             Console.WriteLine($"GetKeys ({query}): {string.Join(", ", keys)}");
         }
 
         static async Task SearchWordAsync()
         {
-            var query = "a";
-            var words = await drae.SearchWordAsync(query, false);
+            string query = "a";
+            IList<Word> words = await drae.SearchWordAsync(query, false);
 
             Console.WriteLine($"SearchWord ({query}): {string.Join(", ", words.Select(w => $"{w.Content} ({w.Id})"))}");
         }
 
         static async Task WordOfTheDayAsync()
         {
-            var word = await drae.GetWordOfTheDayAsync();
+            Word word = await drae.GetWordOfTheDayAsync();
 
             Console.WriteLine($"Word of the day: {word} ({word.Id})");
         }
 
         static async Task GetRandomWorldAsync()
         {
-            var word = await drae.GetRandomWordAsync();
+            Word word = await drae.GetRandomWordAsync();
 
             Console.WriteLine($"A random word: {word}");
         }
@@ -80,7 +81,7 @@ namespace RAE.Demo
             string character = "A";
             string[] words = await drae.GetWordsStartWithAsync(character);
 
-            Console.WriteLine($"There are {words.Length} words in the dictionary that start with '{character}'");
+            Console.WriteLine($"There are {words.Length} words in the spanish dictionary that start with '{character}'");
         }
 
         static async Task GetWordsContainAsync()
@@ -88,14 +89,14 @@ namespace RAE.Demo
             string character = "A";
             string[] words = await drae.GetWordsContainAsync(character);
 
-            Console.WriteLine($"There are {words.Length} words in the dictionary that contain '{character}'");
+            Console.WriteLine($"There are {words.Length} words in the spanish dictionary that contain '{character}'");
         }
 
         static async Task GetAllWordsAsync()
         {
             string[] allWords = await drae.GetAllWordsAsync();
 
-            Console.WriteLine($"There are {allWords.Length} words in the dictionary");
+            Console.WriteLine($"There are {allWords.Length} words in the spanish dictionary");
         }
     }
 }
