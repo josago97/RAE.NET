@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -57,16 +55,13 @@ namespace RAE
         public async Task<Word> GetRandomWordAsync()
         {
             string response = await _httpClient.GetStringAsync($"{URLBASE}/random");
+            XmlDocument xml = new XmlDocument();
+            xml.LoadXml($"<root>{response}</root>");
 
-            string idFormat = "article id=\"";
-            Match idMatch = Regex.Match(response, $@"{idFormat}\w+");
-            string id = Regex.Replace(idMatch.Value, idFormat, "");
+            string id = xml.DocumentElement.SelectSingleNode("//article").Attributes["id"].Value;
+            string content = xml.DocumentElement.SelectSingleNode("//header").InnerText;
 
-            string contentFormat = "class=\"f\".*?>";
-            Match contentMatch = Regex.Match(response, $@"{contentFormat}\w[\,\s\w]*");
-            string content = Regex.Replace(contentMatch.Value, contentFormat, "");
-
-            return new Word(id, HtmlDecode(content));
+            return new Word(id, content);
         }
 
         public async Task<Word> GetWordOfTheDayAsync()
