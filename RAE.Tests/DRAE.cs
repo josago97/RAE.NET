@@ -12,9 +12,9 @@ public class DRAE
     [InlineData("niño")]
     [InlineData("tonto")]
     [InlineData("y")]
-    public async Task FetchWordsExist(string word)
+    public async Task FetchWordExist(string word)
     {
-        IList<IWord> words = await Drae.FetchWordsAsync(word);
+        IList<IWord> words = await Drae.FetchWordAsync(word);
 
         Assert.NotNull(words);
         Assert.NotEmpty(words);
@@ -22,9 +22,9 @@ public class DRAE
 
     [Theory]
     [InlineData("asdadasdada")]
-    public async Task FetchWordsNoExist(string word)
+    public async Task FetchWordNoExist(string word)
     {
-        IList<IWord> words = await Drae.FetchWordsAsync(word);
+        IList<IWord> words = await Drae.FetchWordAsync(word);
 
         Assert.NotNull(words);
         Assert.Empty(words);

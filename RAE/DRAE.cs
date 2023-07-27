@@ -24,7 +24,7 @@ namespace RAE
         /// <para>The word to search.</para>
         /// <para>La palabra a buscar.</para>
         /// </param>
-        public async Task<IWord[]> FetchWordsAsync(string word)
+        public async Task<IWord[]> FetchWordAsync(string word)
         {
             IEntry[] entries = await _raeAPI.SearchWordAsync(word, true);
             List<IWord> result = new List<IWord>(entries.Length);
