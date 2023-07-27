@@ -5,9 +5,9 @@
 Esta es una biblioteca no oficial que te permite:
 <br>
 This is an unofficial library that allows you to:
+<br>
 
-
-- Obtener definiciones de una palabra. 
+Obtener definiciones de una palabra. 
 <br>
 Get definitions of a word.
 
