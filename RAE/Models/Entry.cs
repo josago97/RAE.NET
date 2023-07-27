@@ -1,12 +1,11 @@
-﻿namespace RAE
+﻿namespace RAE.Models
 {
-    public class Word
+    internal class Entry : IEntry
     {
         public string Id { get; private set; }
-
         public string Content { get; private set; }
 
-        public Word(string id, string content)
+        internal Entry(string id, string content)
         {
             Id = id;
             Content = content;
@@ -14,7 +13,7 @@
 
         public override string ToString()
         {
-            return Content;
+            return $"#{Id} => {Content}";
         }
     }
 }

@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 
-namespace RAE
+namespace RAE.Services
 {
     internal class ListaPalabrasAPI
     {
@@ -29,7 +29,7 @@ namespace RAE
             {
                 result.AddRange(words);
             }
-            
+
             return result.ToArray();
         }
 
@@ -80,12 +80,12 @@ namespace RAE
 
         private string[] GetWords(HtmlDocument document)
         {
-            string[] words = document.GetElementbyId("columna_resultados_generales")
-                                     .SelectNodes("descendant::*[@id='palabra_resultado']")
-                                     .Select(node => node.InnerText.Trim(' ', '\n'))
-                                     .ToArray();
+            HtmlNode resultNode = document.GetElementbyId("columna_resultados_generales");
+            HtmlNodeCollection wordNodes = resultNode.SelectNodes("descendant::*[@id='palabra_resultado']");
 
-            return words;
+            return wordNodes == null 
+                ? new string[0] 
+                : wordNodes.Select(node => node.InnerText.Trim(' ', '\n')).ToArray();
         }
     }
 }

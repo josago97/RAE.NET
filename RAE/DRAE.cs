@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using RAE.Models;
+using RAE.Services;
 
 namespace RAE
 {
     public class DRAE
     {
-        private RAEAPI _raeAPI;
-        private ListaPalabrasAPI _listaPalabrasAPI;
+        private readonly RAEAPI _raeAPI;
+        private readonly ListaPalabrasAPI _listaPalabrasAPI;
 
         public DRAE()
         {
@@ -15,20 +17,42 @@ namespace RAE
         }
 
         /// <summary>
-        /// <para>Get definitions of a word.</para>
-        /// <para>Obtiene las definiciones de una palabra.</para>
+        /// <para>Gets the information of all occurrences related to a word.</para>
+        /// <para>Obtiene la información de todas las ocurrencias relacionadas con una palabra.</para>
+        /// </summary>
+        /// <param name="word">
+        /// <para>The word to search.</para>
+        /// <para>La palabra a buscar.</para>
+        /// </param>
+        public async Task<IWord[]> FetchWordsAsync(string word)
+        {
+            IEntry[] entries = await _raeAPI.SearchWordAsync(word, true);
+            List<IWord> result = new List<IWord>(entries.Length);
+
+            foreach (IEntry entry in entries)
+            {
+                IWord wordData = await _raeAPI.FetchWordByIdAsync(entry.Id);
+                result.Add(wordData);
+            }
+
+            return result.ToArray();
+        }
+
+        /// <summary>
+        /// <para>Gets the information related to a word.</para>
+        /// <para>Obtiene la información relacionada con una palabra.</para>
         /// </summary>
         /// <param name="wordId">
         /// <para>The id of the word to search.</para>
         /// <para>El id de la palabra a buscar.</para>
         /// </param>
-        public Task<string[]> FetchWordByIdAsync(string wordId)
+        public async Task<IWord> FetchWordByIdAsync(string wordId)
         {
-            return _raeAPI.FetchWordByIdAsync(wordId);
+            return await _raeAPI.FetchWordByIdAsync(wordId);
         }
 
         /// <summary>
-        /// <para>Get all the words that exist.</para>
+        /// <para>Gets all the words that exist.</para>
         /// <para>Obtiene todas las palabras que existen.</para>
         /// </summary>
         public Task<string[]> GetAllWordsAsync()
@@ -37,7 +61,7 @@ namespace RAE
         }
 
         /// <summary>
-        /// <para>Get keywords from another.</para>
+        /// <para>Gets keywords from another.</para>
         /// <para>Obtiene palabras claves a partir de otra.</para>
         /// </summary>
         /// <param name="query">
@@ -50,19 +74,19 @@ namespace RAE
         }
 
         /// <summary>
-        /// <para>Get a random word.</para>
+        /// <para>Gets a random word.</para>
         /// <para>Obtiene una palabra aleatoria.</para>
         /// </summary>
-        public Task<Word> GetRandomWordAsync()
+        public Task<IWord> GetRandomWordAsync()
         {
             return _raeAPI.GetRandomWordAsync();
         }
 
         /// <summary>
-        /// <para>Get the word of the day.</para>
+        /// <para>Gets the word of the day.</para>
         /// <para>Obtiene la palabra del día.</para>
         /// </summary>
-        public Task<Word> GetWordOfTheDayAsync()
+        public Task<IEntry> GetWordOfTheDayAsync()
         {
             return _raeAPI.GetWordOfTheDayAsync();
         }
@@ -105,7 +129,7 @@ namespace RAE
         /// <para>If true it will take secondary entries.</para>
         /// <para>Si es verdadero cogerá entradas secundarias.</para>
         /// </param>
-        public Task<List<Word>> SearchWordAsync(string word, bool allGroups = true)
+        public Task<IEntry[]> SearchWordAsync(string word, bool allGroups = true)
         {
             return _raeAPI.SearchWordAsync(word, allGroups);
         }

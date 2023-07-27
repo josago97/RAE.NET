@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using RAE.Models;
 
 namespace RAE.Demo
 {
@@ -11,6 +12,7 @@ namespace RAE.Demo
 
         static Func<Task>[] functions =
         {
+            FetchWordsAsync,
             GetKeysAsync,
             SearchWordAsync,
             WordOfTheDayAsync,
@@ -37,6 +39,23 @@ namespace RAE.Demo
             Console.ReadLine();
         }
 
+        static async Task FetchWordsAsync()
+        {
+            string[] wordsToFetch = { "y", "tonto", "niño", "en", "manada" };
+
+            foreach (string wordToFetch in wordsToFetch)
+            {
+                IList<IWord> words = await drae.FetchWordsAsync(wordToFetch);
+
+                foreach (IWord word in words)
+                {
+                    Console.WriteLine(word);
+                }
+
+                Console.WriteLine();
+            }
+        }
+
         static async Task GetKeysAsync()
         {
             string query = "w";
@@ -48,32 +67,30 @@ namespace RAE.Demo
         static async Task SearchWordAsync()
         {
             string query = "a";
-            IList<Word> words = await drae.SearchWordAsync(query, false);
+            IEntry[] entries = await drae.SearchWordAsync(query, false);
 
-            Console.WriteLine($"SearchWord ({query}): {string.Join(", ", words.Select(w => $"{w.Content} ({w.Id})"))}");
+            Console.WriteLine($"SearchWord ({query}): {string.Join<IEntry>(", ", entries)}");
         }
 
         static async Task WordOfTheDayAsync()
         {
-            Word word = await drae.GetWordOfTheDayAsync();
+            IEntry word = await drae.GetWordOfTheDayAsync();
 
             Console.WriteLine($"Word of the day: {word} ({word.Id})");
         }
 
         static async Task GetRandomWorldAsync()
         {
-            Word word = await drae.GetRandomWordAsync();
+            IWord word = await drae.GetRandomWordAsync();
 
             Console.WriteLine($"A random word: {word}");
         }
 
         static async Task FetchRandomWorldAsync()
         {
-            Word word = await drae.GetRandomWordAsync();
-            string[] definitions = await drae.FetchWordByIdAsync(word.Id);
+            IWord word = await drae.GetRandomWordAsync();
 
-            Console.WriteLine($"Definitions of {word.Content}:");
-            Array.ForEach(definitions, Console.WriteLine);
+            Console.WriteLine(word);
         }
 
         static async Task GetWordsStartWithAsync()
