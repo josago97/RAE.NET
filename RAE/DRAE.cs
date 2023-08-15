@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using RAE.Models;
 using RAE.Services;
 
 namespace RAE
@@ -46,9 +45,9 @@ namespace RAE
         /// <para>The id of the word to search.</para>
         /// <para>El id de la palabra a buscar.</para>
         /// </param>
-        public async Task<IWord> FetchWordByIdAsync(string wordId)
+        public Task<IWord> FetchWordByIdAsync(string wordId)
         {
-            return await _raeAPI.FetchWordByIdAsync(wordId);
+            return _raeAPI.FetchWordByIdAsync(wordId);
         }
 
         /// <summary>

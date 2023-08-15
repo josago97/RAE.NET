@@ -42,7 +42,7 @@ namespace RAE.Services
 
         public async Task<string[]> GetWordsContainAsync(string query)
         {
-            var content = new FormUrlEncodedContent(new[]
+            FormUrlEncodedContent content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string, string>("busqueda", query)
             });
@@ -54,7 +54,7 @@ namespace RAE.Services
 
         private async Task<HtmlDocument> LoadPageAsync(string url)
         {
-            var document = new HtmlDocument();
+            HtmlDocument document = new HtmlDocument();
 
             using (Stream documentStream = await _httpClient.GetStreamAsync(url))
             {
@@ -66,9 +66,8 @@ namespace RAE.Services
 
         private async Task<HtmlDocument> LoadPageAsync(string url, HttpContent content)
         {
-            var document = new HtmlDocument();
-
-            var response = await _httpClient.PostAsync(url, content);
+            HtmlDocument document = new HtmlDocument();
+            HttpResponseMessage response = await _httpClient.PostAsync(url, content);
 
             using (Stream documentStream = await response.Content.ReadAsStreamAsync())
             {
