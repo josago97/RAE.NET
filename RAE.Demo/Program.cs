@@ -24,9 +24,11 @@ namespace RAE.Demo
         {
             drae = new DRAE();
 
-            for (int i = 0; i < functions.Length; i++)
+            await drae.FetchWordByIdAsync("7lsKMtR");
+
+            foreach (Func<Task> function in functions)
             {
-                await functions[i]();
+                await function.Invoke();
                 Console.WriteLine();
                 Console.WriteLine(new string('-', 20));
                 Console.WriteLine();

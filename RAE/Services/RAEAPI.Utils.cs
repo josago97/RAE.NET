@@ -3,7 +3,9 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Xml;
+using HtmlAgilityPack;
 using RAE.Models;
+using RAE.Utilities;
 
 namespace RAE.Services
 {
@@ -43,36 +45,30 @@ namespace RAE.Services
             return WebUtility.HtmlDecode(content);
         }
 
-        private XmlDocument ParseToDocument(string xml)
+        private Word GetWord(string html)
         {
-            XmlDocument document = new XmlDocument();
-            document.LoadXml($"<root>{xml}</root>");
+            if (string.IsNullOrWhiteSpace(html)) return null;
 
-            return document;
-        }
+            HtmlDocument document = new HtmlDocument();
+            document.LoadHtml(html);
+            HtmlNode root = document.DocumentNode;
 
-        private Word GetWord(string xml)
-        {
-            if (string.IsNullOrEmpty(xml)) return null;
-
-            XmlDocument document = ParseToDocument(xml);
-
-            string id = document.SelectSingleNode("//article").Attributes["id"].Value;
-            XmlElement header = (XmlElement)document.SelectSingleNode("//header");
+            string id = root.SelectSingleNode("//article").GetAttributeValue("id");
+            HtmlNode header = root.SelectSingleNode("//header");
             string content = header.SelectSingleNode("./node()[not(self::sup)]").InnerText;
-            string[] values = header.GetAttribute("title").Replace("Definición de ", "").Split(", ");
-            string origin = BuildString(document.SelectNodes(".//p[@class='n2' or @class='n4']/node()[not(self::sup)]"));
-            Definition[] definitions = GetDefinitions(document.DocumentElement);
+            string[] values = header.GetAttributeValue("title").Replace("Definición de ", "").Split(", ");
+            string origin = BuildString(root.SelectNodesOrEmpty(".//p[@class='n2' or @class='n4']/node()[not(self::sup)]"));
+            Definition[] definitions = GetDefinitions(root);
 
             return new Word(id, content, origin, values, definitions);
         }
 
-        private Definition[] GetDefinitions(XmlElement document)
+        private Definition[] GetDefinitions(HtmlNode document)
         {
             List<Definition> result = new List<Definition>();
-            XmlNodeList definitions = document.SelectNodes("//p[contains(@class, 'j')]");
+            HtmlNodeCollection definitions = document.SelectNodesOrEmpty("//p[contains(@class, 'j')]");
 
-            foreach (XmlElement definition in definitions)
+            foreach (HtmlNode definition in definitions)
             {
                 result.Add(GetDefinition(definition));
             }
@@ -80,7 +76,7 @@ namespace RAE.Services
             return result.ToArray();
         }
 
-        private Definition GetDefinition(XmlElement document)
+        private Definition GetDefinition(HtmlNode document)
         {
             WordType type = default;
             WordGenre? genre = null;
@@ -88,9 +84,9 @@ namespace RAE.Services
             bool isObsolete = false;
             List<string> extraData = new List<string>();
 
-            XmlNodeList dataNodes = document.SelectNodes("./*/preceding-sibling::abbr");
+            HtmlNodeCollection dataNodes = document.SelectNodesOrEmpty("./*/preceding-sibling::abbr");
 
-            foreach (XmlElement dataNode in dataNodes)
+            foreach (HtmlNode dataNode in dataNodes)
             {
                 string[] dataValues = dataNode.InnerText.Split(' ');
                 bool includedExtraData = false;
@@ -110,7 +106,7 @@ namespace RAE.Services
                         isObsolete = true;
                     else if (!includedExtraData)
                     {
-                        extraData.Add(dataNode.GetAttribute("title"));
+                        extraData.Add(dataNode.GetAttributeValue("title"));
                         includedExtraData = true;
                     }
                 }
@@ -123,32 +119,32 @@ namespace RAE.Services
             return new Definition(type, genre, language, isObsolete, content, origins, examples);
         }
 
-        private string GetDefinitionContent(XmlElement document)
+        private string GetDefinitionContent(HtmlNode document)
         {
             string startElementXpath = ".//*[not(self::abbr)]/preceding-sibling::abbr[1]";
-            XmlElement startElement = (XmlElement)document.SelectSingleNode(startElementXpath);
+            HtmlNode startElement = document.SelectSingleNode(startElementXpath);
 
             string nodesXpath = "./following-sibling::node()[not(@class='h')]";
-            XmlNodeList nodes = startElement.SelectNodes(nodesXpath);
+            HtmlNodeCollection nodes = startElement.SelectNodesOrEmpty(nodesXpath);
 
             string result = BuildString(nodes);
 
             if (result.Contains('‖'))
                 result = result.Replace("‖ ", "");
             else if (ALLOW_ABBR_DEFINITION.Contains(startElement.InnerText))
-                result = startElement.GetAttribute("title") + ' ' + result;
+                result = $"{startElement.GetAttributeValue("title")} {result}";
 
             return result;
         }
 
-        private string[] GetDefinitionOrigins(XmlElement document)
+        private string[] GetDefinitionOrigins(HtmlNode document)
         {
             List<string> result = new List<string>();
-            XmlNodeList nodes = document.SelectNodes("./abbr[@class='c']");
+            HtmlNodeCollection nodes = document.SelectNodesOrEmpty("./abbr[@class='c']");
 
-            foreach (XmlElement node in nodes)
+            foreach (HtmlNode node in nodes)
             {
-                string[] origins = node.GetAttribute("title")
+                string[] origins = node.GetAttributeValue("title")
                     .Replace(" y", ",")
                     .Split(", ");
 
@@ -158,14 +154,14 @@ namespace RAE.Services
             return result.ToArray();
         }
 
-        private string[] GetDefinitionExamples(XmlElement document)
+        private string[] GetDefinitionExamples(HtmlNode document)
         {
             List<string> result = new List<string>();
-            XmlNodeList nodes = document.SelectNodes("./*[@class='h']");
+            HtmlNodeCollection nodes = document.SelectNodesOrEmpty("./*[@class='h']");
 
-            foreach (XmlElement node in nodes)
+            foreach (HtmlNode node in nodes)
             {
-                XmlNodeList exampleNodes = node.SelectNodes("./node()");
+                HtmlNodeCollection exampleNodes = node.SelectNodesOrEmpty("./node()");
                 string example = BuildString(exampleNodes);
 
                 result.Add(example);
@@ -174,30 +170,23 @@ namespace RAE.Services
             return result.ToArray();
         }
 
-        private string BuildString(XmlNodeList nodes)
+        private string BuildString(HtmlNodeCollection nodes)
         {
             StringBuilder stringBuilder = new StringBuilder();
 
             for (int i = 0; i < nodes.Count; i++)
             {
-                XmlNode node = nodes[i];
+                HtmlNode node = nodes[i];
 
-                if (node is XmlElement element)
-                {
-                    if (element.HasAttribute("title"))
-                        stringBuilder.Append(element.GetAttribute("title"));
-                    else
-                        stringBuilder.Append(element.InnerText);
-
-                    if (i == nodes.Count - 1 && stringBuilder[^1] != '.')
-                        stringBuilder.Append('.');
-                    else if (i < nodes.Count - 1 && nodes[i + 1] is XmlElement)
-                        stringBuilder.Append(' ');
-                }
+                if (node.GetDataAttribute("title") is HtmlAttribute attribute)
+                    stringBuilder.Append(attribute.Value);
                 else
-                {
                     stringBuilder.Append(node.InnerText);
-                }
+
+                if (i == nodes.Count - 1 && stringBuilder[^1] != '.')
+                    stringBuilder.Append('.');
+                else if (i < nodes.Count - 1 && nodes[i + 1] is HtmlNode)
+                    stringBuilder.Append(' ');
             }
 
             return stringBuilder.ToString().Trim();

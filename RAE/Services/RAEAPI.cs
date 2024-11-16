@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using RAE.Models;
 
 namespace RAE.Services
@@ -38,7 +37,7 @@ namespace RAE.Services
             string response = await _httpClient.GetStringAsync($"{URLBASE}/keys?q={query}&callback=");
             string json = Regex.Match(response, @"\[.*?\]").Value;
 
-            string[] keys = JsonConvert.DeserializeObject<string[]>(json);
+            string[] keys = JsonSerializer.Deserialize<string[]>(json);
 
             return keys;
         }
@@ -53,10 +52,10 @@ namespace RAE.Services
         public async Task<IEntry> GetWordOfTheDayAsync()
         {
             string response = await _httpClient.GetStringAsync($"{URLBASE}/wotd?callback=");
-            JObject jobject = JObject.Parse(response);
+            JsonElement element = JsonDocument.Parse(response).RootElement;
 
-            string id = jobject.Value<string>("id");
-            string content = jobject.Value<string>("header");
+            string id = element.GetProperty("id").GetString();
+            string content = element.GetProperty("header").GetString();
 
             return new Entry(id, HtmlDecode(content));
         }
@@ -64,17 +63,17 @@ namespace RAE.Services
         public async Task<IEntry[]> SearchWordAsync(string word, bool allGroups = true)
         {
             string response = await _httpClient.GetStringAsync($"{URLBASE}/search?w={word}");
-            JToken jtoken = JToken.Parse(response);
+            JsonElement element = JsonDocument.Parse(response).RootElement;
             List<IEntry> words = new List<IEntry>();
 
-            foreach (JToken jWord in jtoken.SelectToken("res"))
+            foreach (JsonElement jWord in element.GetProperty("res").EnumerateArray())
             {
-                int group = jWord.Value<int>("grp");
+                int group = jWord.GetProperty("grp").GetInt32();
 
                 if (allGroups || group == 0)
                 {
-                    string id = jWord.Value<string>("id");
-                    string content = jWord.Value<string>("header");
+                    string id = jWord.GetProperty("id").GetString();
+                    string content = jWord.GetProperty("header").GetString();
                     Match contentMatch = Regex.Match(content, @"\b[\p{L}\p{M}/-]+");
                     if (contentMatch.Success) content = contentMatch.Value;
 
